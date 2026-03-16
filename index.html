@@ -2,153 +2,544 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌈 阳光花园守护者</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🌈 阳光花园守护者 - 儿童益智游戏</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Microsoft YaHei', sans-serif; background: linear-gradient(135deg, #FFE5B4 0%, #E8F5E9 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 10px; }
-        .game-title { font-size: 24px; color: #FF6B6B; margin: 10px 0; }
-        .level-badge { background: linear-gradient(135deg, #FFD93D, #F6AD55); padding: 5px 15px; border-radius: 15px; color: white; font-weight: bold; margin-bottom: 10px; }
-        #gameCanvas { border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-        .controls { margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-        button { padding: 12px 25px; font-size: 16px; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
-        button:hover { transform: scale(1.05); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-plant { background: #4ECDC4; color: white; }
-        .btn-plant.selected { background: #FF6B6B; }
-        .btn-action { background: #FFD93D; color: #333; }
-        .btn-rescue { background: #E91E63; color: white; }
-        .btn-rescue:disabled { background: #ccc; }
-        .sun-display { font-size: 20px; color: #FF6B6B; margin: 10px; }
-        .stars-display { font-size: 18px; color: #FFD93D; margin: 10px; }
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: white; padding: 30px; border-radius: 20px; max-width: 500px; text-align: center; }
-        .quiz-option { display: block; width: 100%; padding: 15px; margin: 10px 0; background: #E3F2FD; border: 2px solid #2196F3; border-radius: 10px; cursor: pointer; font-size: 16px; }
-        .quiz-option:hover { background: #BBDEFB; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        :root {
+            --primary: #4ECDC4;
+            --secondary: #FF6B6B;
+            --accent: #FFD93D;
+            --bg-gradient: linear-gradient(135deg, #FFE5B4 0%, #E8F5E9 50%, #C8E6C9 100%);
+        }
+        
+        body { 
+            font-family: 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, sans-serif; 
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            overflow-x: hidden;
+        }
+        
+        /* 游戏标题区 */
+        .header {
+            text-align: center;
+            margin-bottom: 8px;
+            animation: fadeInDown 0.6s ease;
+        }
+        
+        .game-title { 
+            font-size: 26px; 
+            color: var(--secondary); 
+            margin: 5px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            font-weight: 800;
+        }
+        
+        .game-subtitle {
+            font-size: 13px;
+            color: #666;
+            margin-top: 2px;
+        }
+        
+        /* 状态栏 */
+        .status-bar {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            animation: fadeIn 0.8s ease;
+        }
+        
+        .status-item {
+            background: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        
+        .status-item:hover {
+            transform: translateY(-2px);
+        }
+        
+        .status-sun { color: #FF9800; }
+        .status-stars { color: #FFD700; }
+        .status-level { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .status-progress { color: #4CAF50; }
+        
+        /* 进度条 */
+        .progress-container {
+            width: 90%;
+            max-width: 600px;
+            margin-bottom: 10px;
+        }
+        
+        .progress-bar {
+            height: 12px;
+            background: #E0E0E0;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4ECDC4, #44A08D);
+            border-radius: 6px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+        
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        /* 游戏画布 */
+        #gameCanvas { 
+            border-radius: 16px; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            background: white;
+            max-width: 100%;
+            touch-action: none;
+        }
+        
+        /* 植物选择区 */
+        .plant-selector {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.6s ease;
+        }
+        
+        .plant-card {
+            width: 75px;
+            padding: 10px 5px;
+            background: white;
+            border: 3px solid transparent;
+            border-radius: 16px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        
+        .plant-card:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        
+        .plant-card.selected {
+            border-color: var(--secondary);
+            background: #FFF5F5;
+            transform: scale(1.08);
+        }
+        
+        .plant-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            filter: grayscale(0.5);
+        }
+        
+        .plant-emoji {
+            font-size: 32px;
+            margin-bottom: 4px;
+            display: block;
+        }
+        
+        .plant-name {
+            font-size: 12px;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        
+        .plant-cost {
+            font-size: 11px;
+            color: #FF9800;
+            font-weight: 700;
+        }
+        
+        /* 操作按钮区 */
+        .action-bar {
+            margin-top: 12px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.8s ease;
+        }
+        
+        .btn {
+            padding: 14px 28px;
+            font-size: 16px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #44A08D);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary), #EE5A5A);
+            color: white;
+        }
+        
+        .btn-accent {
+            background: linear-gradient(135deg, var(--accent), #F6AD55);
+            color: #333;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        /* 开始封面 */
+        .cover-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-gradient);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+        
+        .cover-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .cover-title {
+            font-size: 42px;
+            color: var(--secondary);
+            margin-bottom: 20px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.1);
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .cover-mascot {
+            font-size: 100px;
+            margin: 20px 0;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(5deg); }
+        }
+        
+        .cover-features {
+            display: flex;
+            gap: 30px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .feature-item {
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .feature-item span {
+            font-size: 36px;
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .btn-start {
+            padding: 18px 50px;
+            font-size: 22px;
+            background: linear-gradient(135deg, var(--secondary), #EE5A5A);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 800;
+            box-shadow: 0 8px 24px rgba(255,107,107,0.4);
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+        
+        .btn-start:hover {
+            transform: scale(1.05) translateY(-3px);
+            box-shadow: 0 12px 32px rgba(255,107,107,0.5);
+        }
+        
+        /* 弹窗样式 */
+        .modal { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.6); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 24px; 
+            max-width: 450px; 
+            width: 90%;
+            text-align: center;
+            transform: scale(0.8);
+            transition: transform 0.3s;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+        
+        .modal-title {
+            font-size: 26px;
+            color: var(--secondary);
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        
+        .quiz-option { 
+            display: block; 
+            width: 100%; 
+            padding: 16px; 
+            margin: 10px 0; 
+            background: #F5F5F5; 
+            border: 2px solid transparent; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .quiz-option:hover { 
+            background: #E3F2FD; 
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+        
+        /* 动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
-    <h1 class="game-title">🌈 阳光花园守护者</h1>
-    <div class="level-badge" id="levelBadge">🌍 第 1 关：阳光花园</div>
-    <div style="display: flex; gap: 20px;">
-        <div class="sun-display">☀️ 阳光: <span id="sunCount">150</span></div>
-        <div class="stars-display">⭐ 智慧星星: <span id="starCount">0</span></div>
-    </div>
-    <canvas id="gameCanvas" width="700" height="480"></canvas>
-    <div class="controls">
-        <button class="btn-plant" onclick="selectPlant('sunflower')">🌻 太阳花 (50)</button>
-        <button class="btn-plant" onclick="selectPlant('peashooter')">🫛 豌豆苗苗 (100)</button>
-        <button class="btn-plant" onclick="selectPlant('wallnut')">🥜 坚果墩墩 (50)</button>
-        <button class="btn-plant" onclick="selectPlant('cherry')">🍒 樱桃闹闹 (150)</button>
-        <button class="btn-rescue" id="rescueBtn" onclick="activateRescue()">🚗 婴儿车救援</button>
-        <button class="btn-action" onclick="startGame()">▶️ 开始守护</button>
-        <button class="btn-action" onclick="resetGame()">🔄 重新开始</button>
+    <!-- 开始封面 -->
+    <div id="coverScreen" class="cover-screen">
+        <div class="cover-title">🌈 阳光花园守护者</div>
+        <div class="cover-mascot">🌻</div>
+        <div class="cover-features">
+            <div class="feature-item">
+                <span>🎮</span>
+                趣味益智
+            </div>
+            <div class="feature-item">
+                <span>📚</span>
+                知识问答
+            </div>
+            <div class="feature-item">
+                <span>🎨</span>
+                精美画面
+            </div>
+        </div>
+        <button class="btn-start" onclick="startGameFromCover()">▶️ 开始游戏</button>
+        <p style="margin-top: 20px; color: #888; font-size: 13px;">适合 3-8 岁儿童 | 无需联网</p>
     </div>
 
-    <div id="quizModal" class="modal hidden">
+    <!-- 主游戏界面 -->
+    <div class="header">
+        <h1 class="game-title">🌈 阳光花园守护者</h1>
+        <p class="game-subtitle">帮助植物宝宝守护家园，赶走小淘气！</p>
+    </div>
+    
+    <div class="status-bar">
+        <div class="status-item status-level" id="levelBadge">🌍 第 1 关</div>
+        <div class="status-item status-sun">☀️ <span id="sunCount">150</span></div>
+        <div class="status-item status-stars">⭐ <span id="starCount">0</span></div>
+        <div class="status-item status-progress">🎯 <span id="progressText">0/10</span></div>
+    </div>
+    
+    <div class="progress-container">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar" style="width: 0%"></div>
+        </div>
+    </div>
+    
+    <canvas id="gameCanvas" width="700" height="480"></canvas>
+    
+    <!-- 植物选择 -->
+    <div class="plant-selector">
+        <div class="plant-card" data-plant="sunflower" onclick="selectPlant('sunflower')">
+            <span class="plant-emoji">🌻</span>
+            <div class="plant-name">太阳花</div>
+            <div class="plant-cost">☀️ 50</div>
+        </div>
+        <div class="plant-card" data-plant="peashooter" onclick="selectPlant('peashooter')">
+            <span class="plant-emoji">🫛</span>
+            <div class="plant-name">豌豆苗苗</div>
+            <div class="plant-cost">☀️ 100</div>
+        </div>
+        <div class="plant-card" data-plant="wallnut" onclick="selectPlant('wallnut')">
+            <span class="plant-emoji">🥜</span>
+            <div class="plant-name">坚果墩墩</div>
+            <div class="plant-cost">☀️ 50</div>
+        </div>
+        <div class="plant-card" data-plant="cherry" onclick="selectPlant('cherry')">
+            <span class="plant-emoji">🍒</span>
+            <div class="plant-name">樱桃闹闹</div>
+            <div class="plant-cost">☀️ 150</div>
+        </div>
+    </div>
+    
+    <!-- 操作按钮 -->
+    <div class="action-bar">
+        <button class="btn btn-secondary" id="rescueBtn" onclick="activateRescue()">
+            🚗 婴儿车救援
+        </button>
+        <button class="btn btn-primary" onclick="startGame()">
+            ▶️ 开始守护
+        </button>
+        <button class="btn btn-accent" onclick="resetGame()">
+            🔄 重新开始
+        </button>
+    </div>
+
+    <!-- 知识问答弹窗 -->
+    <div id="quizModal" class="modal">
         <div class="modal-content">
-            <h2>🎓 知识小屋</h2>
-            <p id="quizQuestion" style="font-size: 18px; margin: 20px 0;"></p>
+            <div class="modal-title">🎓 知识小屋</div>
+            <p id="quizQuestion" style="font-size: 17px; margin: 20px 0; color: #333;"></p>
             <div id="quizOptions"></div>
         </div>
     </div>
 
-    <div id="levelCompleteModal" class="modal hidden">
+    <!-- 关卡完成弹窗 -->
+    <div id="levelCompleteModal" class="modal">
         <div class="modal-content">
-            <h2>🎉 关卡完成！</h2>
-            <p>你成功守护了阳光花园！</p>
-            <p>获得奖励：⭐ 智慧星星 +1</p>
-            <button onclick="nextLevel()">下一关</button>
-            <button onclick="closeModal('levelCompleteModal')">继续当前关卡</button>
+            <div class="modal-title">🎉 恭喜通关！</div>
+            <p style="font-size: 16px; color: #666; margin: 15px 0;">你成功守护了阳光花园！</p>
+            <p style="font-size: 18px; color: #FF9800; font-weight: 700; margin: 15px 0;">获得奖励：⭐ 智慧星星 +1</p>
+            <div style="margin-top: 20px;">
+                <button class="btn btn-primary" onclick="nextLevel()">下一关 ➡️</button>
+                <button class="btn btn-accent" onclick="closeModal('levelCompleteModal')" style="margin-left: 10px;">继续当前关卡</button>
+            </div>
         </div>
     </div>
 
     <script>
         // 游戏配置
         const CONFIG = {
-            ROWS: 5,
-            COLS: 6,
-            CELL_SIZE: 80,
-            OFFSET_X: 100,
-            OFFSET_Y: 70,
-            INITIAL_SUN: 150,
-            INITIAL_HEALTH: 3,
-            NAUGHTY_SPAWN_INTERVAL: 400,
-            SUN_SPAWN_INTERVAL: 600,
-            RESCUE_COOLDOWN: 30000
+            ROWS: 5, COLS: 6, CELL_SIZE: 80, OFFSET_X: 100, OFFSET_Y: 70,
+            INITIAL_SUN: 150, INITIAL_HEALTH: 3,
+            NAUGHTY_SPAWN_INTERVAL: 400, SUN_SPAWN_INTERVAL: 600, RESCUE_COOLDOWN: 30000
         };
 
         // 游戏状态
         const state = {
-            sun: CONFIG.INITIAL_SUN,
-            stars: 0,
-            selectedPlant: null,
-            gameRunning: false,
-            treehouseHealth: CONFIG.INITIAL_HEALTH,
-            frameCount: 0,
-            currentLevel: 1,
-            naughtiesDefeated: 0,
-            naughtiesTarget: 10,
-            rescueAvailable: true
+            sun: CONFIG.INITIAL_SUN, stars: 0, selectedPlant: null, gameRunning: false,
+            treehouseHealth: CONFIG.INITIAL_HEALTH, frameCount: 0, currentLevel: 1,
+            naughtiesDefeated: 0, naughtiesTarget: 10, rescueAvailable: true
         };
 
-        // 游戏对象数组
-        const gameObjects = {
-            plants: [],
-            naughties: [],
-            projectiles: [],
-            sunDrops: [],
-            effects: [],
-            rescueCars: []
-        };
+        const gameObjects = { plants: [], naughties: [], projectiles: [], sunDrops: [], effects: [], rescueCars: [] };
 
-        // DOM 元素
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const sunCountEl = document.getElementById('sunCount');
-        const starCountEl = document.getElementById('starCount');
-        const levelBadgeEl = document.getElementById('levelBadge');
-        const rescueBtn = document.getElementById('rescueBtn');
 
-        // 植物类型定义
         const PLANTS = {
-            sunflower: { 
-                cost: 50, 
-                emoji: '🌻', 
-                hp: 100, 
-                color: '#FFD93D', 
-                sunProduction: 25,
-                description: '产生阳光'
-            },
-            peashooter: { 
-                cost: 100, 
-                emoji: '🫛', 
-                hp: 100, 
-                color: '#4ECDC4', 
-                damage: 20,
-                attackInterval: 100,
-                description: '发射豌豆攻击'
-            },
-            wallnut: { 
-                cost: 50, 
-                emoji: '🥜', 
-                hp: 300, 
-                color: '#8D6E63',
-                description: '高血量防御'
-            },
-            cherry: { 
-                cost: 150, 
-                emoji: '🍒', 
-                hp: 50, 
-                color: '#FF6B6B', 
-                explodeDamage: 200, 
-                explodeRadius: 150,
-                description: '爆炸攻击'
-            }
+            sunflower: { cost: 50, emoji: '🌻', hp: 100, color: '#FFD93D', sunProduction: 25 },
+            peashooter: { cost: 100, emoji: '🫛', hp: 100, color: '#4ECDC4', damage: 20, attackInterval: 100 },
+            wallnut: { cost: 50, emoji: '🥜', hp: 300, color: '#8D6E63' },
+            cherry: { cost: 150, emoji: '🍒', hp: 50, color: '#FF6B6B', explodeDamage: 200, explodeRadius: 150 }
         };
 
-        // 小淘气类型定义
         const NAUGHTY_TYPES = [
             { type: 'bottle', name: '奶瓶宝宝', hp: 80, speed: 0.4, color: '#81D4FA', emoji: '🍼' },
             { type: 'sleepy', name: '睡帽爷爷', hp: 120, speed: 0.3, color: '#CE93D8', emoji: '😴' },
@@ -156,16 +547,30 @@
             { type: 'bucket', name: '铁桶憨憨', hp: 200, speed: 0.25, color: '#B0BEC5', emoji: '🪣' }
         ];
 
-        // 知识问答题库
         const QUIZZES = [
             { question: '哪个植物能生产阳光？', options: ['🌻 太阳花', '🫛 豌豆苗苗', '🥜 坚果墩墩'], answer: 0 },
             { question: '3 + 2 = ?', options: ['4', '5', '6'], answer: 1 },
-            { question: '哪个植物可以挡住小淘气？', options: ['🍒 樱桃闹闹', '🥜 坚果墩墩', '🌻 太阳花'], answer: 1 },
-            { question: '哪个植物会爆炸？', options: ['🌻 太阳花', '🍒 樱桃闹闹', '🫛 豌豆苗苗'], answer: 1 },
-            { question: '哪个小淘气走得最快？', options: ['🍼 奶瓶宝宝', '🎈 气球飘飘', '🪣 铁桶憨憨'], answer: 1 }
+            { question: '哪个植物可以挡住小淘气？', options: ['🍒 樱桃闹闹', '🥜 坚果墩墩', '🌻 太阳花'], answer: 1 }
         ];
 
-        // 绘制函数
+        function updateUI() {
+            document.getElementById('sunCount').textContent = state.sun;
+            document.getElementById('starCount').textContent = state.stars;
+            document.getElementById('levelBadge').textContent = '🌍 第 ' + state.currentLevel + ' 关';
+            document.getElementById('progressText').textContent = state.naughtiesDefeated + '/' + state.naughtiesTarget;
+            document.getElementById('progressBar').style.width = (state.naughtiesDefeated / state.naughtiesTarget * 100) + '%';
+            
+            // 更新植物卡片状态
+            document.querySelectorAll('.plant-card').forEach(card => {
+                const plantType = card.dataset.plant;
+                if (PLANTS[plantType].cost > state.sun) {
+                    card.classList.add('disabled');
+                } else {
+                    card.classList.remove('disabled');
+                }
+            });
+        }
+
         function drawBackground() {
             const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
             gradient.addColorStop(0, '#87CEEB');
@@ -173,8 +578,8 @@
             gradient.addColorStop(1, '#90EE90');
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // 绘制太阳
+            
+            // 太阳
             ctx.fillStyle = '#FFD93D';
             ctx.beginPath();
             ctx.arc(60, 60, 35, 0, Math.PI * 2);
@@ -184,11 +589,6 @@
             ctx.arc(55, 55, 8, 0, Math.PI * 2);
             ctx.arc(70, 55, 8, 0, Math.PI * 2);
             ctx.fill();
-            ctx.strokeStyle = '#FF8C00';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.arc(62, 70, 12, 0.2, Math.PI - 0.2);
-            ctx.stroke();
         }
 
         function drawGrid() {
@@ -206,34 +606,13 @@
         }
 
         function drawTreehouse() {
-            const x = 20;
-            const y = CONFIG.OFFSET_Y + CONFIG.ROWS * CONFIG.CELL_SIZE / 2 - 40;
-            
-            // 树干
+            const x = 20, y = CONFIG.OFFSET_Y + CONFIG.ROWS * CONFIG.CELL_SIZE / 2 - 40;
             ctx.fillStyle = '#8D6E63';
             ctx.fillRect(x, y + 30, 40, 50);
-            
-            // 树冠
             ctx.fillStyle = '#4CAF50';
             ctx.beginPath();
             ctx.arc(x + 20, y, 50, 0, Math.PI * 2);
             ctx.fill();
-            
-            // 房子
-            ctx.fillStyle = '#FFCC80';
-            ctx.fillRect(x + 5, y + 10, 30, 30);
-            ctx.fillStyle = '#FF6B6B';
-            ctx.beginPath();
-            ctx.moveTo(x + 5, y + 10);
-            ctx.lineTo(x + 20, y - 5);
-            ctx.lineTo(x + 35, y + 10);
-            ctx.fill();
-            
-            // 门
-            ctx.fillStyle = '#8D6E63';
-            ctx.fillRect(x + 15, y + 25, 10, 15);
-            
-            // 爱心显示
             ctx.font = '20px Arial';
             ctx.fillStyle = '#FF6B6B';
             let hearts = '';
@@ -244,55 +623,28 @@
         function drawPlant(plant) {
             const x = CONFIG.OFFSET_X + plant.col * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
             const y = CONFIG.OFFSET_Y + plant.row * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
-            
-            // 植物背景
             ctx.fillStyle = plant.type.color;
             ctx.beginPath();
             ctx.arc(x, y, 30, 0, Math.PI * 2);
             ctx.fill();
-            
-            // 植物表情
             ctx.font = '40px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(plant.type.emoji, x, y);
-            
-            // 血条
-            if (plant.hp < plant.maxHp) {
-                const hpPercent = plant.hp / plant.maxHp;
-                ctx.fillStyle = '#FF6B6B';
-                ctx.fillRect(x - 25, y - 40, 50, 6);
-                ctx.fillStyle = '#4CAF50';
-                ctx.fillRect(x - 25, y - 40, 50 * hpPercent, 6);
-            }
         }
 
         function drawNaughty(naughty) {
-            const x = naughty.x;
-            const y = CONFIG.OFFSET_Y + naughty.row * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
-            
-            // 身体
+            const x = naughty.x, y = CONFIG.OFFSET_Y + naughty.row * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
             ctx.fillStyle = naughty.data.color;
             ctx.beginPath();
             ctx.ellipse(x, y + 10, 25, 35, 0, 0, Math.PI * 2);
             ctx.fill();
-            
-            // 头
             ctx.fillStyle = '#FFCCBC';
             ctx.beginPath();
             ctx.arc(x, y - 20, 22, 0, Math.PI * 2);
             ctx.fill();
-            
-            // 表情
             ctx.font = '30px Arial';
             ctx.fillText(naughty.data.emoji, x - 15, y - 35);
-            
-            // 血条
-            const hpPercent = naughty.hp / naughty.data.hp;
-            ctx.fillStyle = '#FF6B6B';
-            ctx.fillRect(x - 20, y - 55, 40, 5);
-            ctx.fillStyle = '#4CAF50';
-            ctx.fillRect(x - 20, y - 55, 40 * hpPercent, 5);
         }
 
         function drawProjectile(proj) {
@@ -313,343 +665,194 @@
             ctx.fillText('☀', sunDrop.x, sunDrop.y + 5);
         }
 
-        // 生成小淘气
         function spawnNaughty() {
-            const availableTypes = NAUGHTY_TYPES.slice(0, Math.min(state.currentLevel + 1, NAUGHTY_TYPES.length));
-            const data = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+            const data = NAUGHTY_TYPES[Math.floor(Math.random() * Math.min(state.currentLevel + 1, NAUGHTY_TYPES.length))];
             const row = Math.floor(Math.random() * CONFIG.ROWS);
-            
-            gameObjects.naughties.push({
-                x: canvas.width + 30,
-                row: row,
-                data: data,
-                hp: data.hp,
-                originalSpeed: data.speed,
-                currentSpeed: data.speed,
-                isEating: false
-            });
+            gameObjects.naughties.push({ x: canvas.width + 30, row, data, hp: data.hp, originalSpeed: data.speed, currentSpeed: data.speed, isEating: false });
         }
 
-        // 生成阳光
         function spawnSun() {
-            gameObjects.sunDrops.push({
-                x: CONFIG.OFFSET_X + Math.random() * (CONFIG.COLS * CONFIG.CELL_SIZE),
-                y: -30,
-                targetY: CONFIG.OFFSET_Y + Math.random() * (CONFIG.ROWS * CONFIG.CELL_SIZE)
-            });
+            gameObjects.sunDrops.push({ x: CONFIG.OFFSET_X + Math.random() * (CONFIG.COLS * CONFIG.CELL_SIZE), y: -30, targetY: CONFIG.OFFSET_Y + Math.random() * (CONFIG.ROWS * CONFIG.CELL_SIZE) });
         }
 
-        // 激活救援
         function activateRescue() {
             if (!state.rescueAvailable || !state.gameRunning) return;
-            
             state.rescueAvailable = false;
-            rescueBtn.disabled = true;
-            rescueBtn.textContent = '🚗 冷却中...';
-            
+            document.getElementById('rescueBtn').disabled = true;
             for (let row = 0; row < CONFIG.ROWS; row++) {
-                gameObjects.rescueCars.push({
-                    x: CONFIG.OFFSET_X - 50,
-                    row: row,
-                    speed: 8
-                });
+                gameObjects.rescueCars.push({ x: CONFIG.OFFSET_X - 50, row, speed: 8 });
             }
-            
-            setTimeout(() => {
-                state.rescueAvailable = true;
-                rescueBtn.disabled = false;
-                rescueBtn.textContent = '🚗 婴儿车救援';
-            }, CONFIG.RESCUE_COOLDOWN);
+            setTimeout(() => { state.rescueAvailable = true; document.getElementById('rescueBtn').disabled = false; }, CONFIG.RESCUE_COOLDOWN);
         }
 
-        // 选择植物
         function selectPlant(type) {
-            if (PLANTS[type].cost > state.sun) {
-                alert('阳光不够哦！种植太阳花可以产生更多阳光 ☀️');
-                return;
-            }
+            if (PLANTS[type].cost > state.sun) { alert('阳光不够哦！'); return; }
             state.selectedPlant = type;
-            document.querySelectorAll('.btn-plant').forEach(btn => btn.classList.remove('selected'));
-            event.target.classList.add('selected');
+            document.querySelectorAll('.plant-card').forEach(c => c.classList.remove('selected'));
+            document.querySelector('.plant-card[data-plant="' + type + '"]').classList.add('selected');
         }
 
-        // 种植植物
         function plantAt(row, col) {
             if (!state.selectedPlant) return;
             if (gameObjects.plants.some(p => p.row === row && p.col === col)) return;
-            
             const plantType = PLANTS[state.selectedPlant];
             if (plantType.cost > state.sun) return;
-            
             state.sun -= plantType.cost;
-            sunCountEl.textContent = state.sun;
-            
-            gameObjects.plants.push({
-                row: row,
-                col: col,
-                type: plantType,
-                hp: plantType.hp,
-                maxHp: plantType.hp
-            });
-            
+            gameObjects.plants.push({ row, col, type: plantType, hp: plantType.hp, maxHp: plantType.hp });
             state.selectedPlant = null;
-            document.querySelectorAll('.btn-plant').forEach(btn => btn.classList.remove('selected'));
+            document.querySelectorAll('.plant-card').forEach(c => c.classList.remove('selected'));
+            updateUI();
         }
 
-        // 收集阳光
         function collectSun(x, y) {
-            const sunDrop = gameObjects.sunDrops.find(s => {
-                const dx = s.x - x;
-                const dy = s.y - y;
-                return Math.sqrt(dx * dx + dy * dy) < 30;
-            });
-            
-            if (sunDrop) {
-                state.sun += 25;
-                sunCountEl.textContent = state.sun;
-                gameObjects.sunDrops = gameObjects.sunDrops.filter(s => s !== sunDrop);
-            }
+            const sunDrop = gameObjects.sunDrops.find(s => { const dx = s.x - x, dy = s.y - y; return Math.sqrt(dx * dx + dy * dy) < 30; });
+            if (sunDrop) { state.sun += 25; gameObjects.sunDrops = gameObjects.sunDrops.filter(s => s !== sunDrop); updateUI(); }
         }
 
-        // 显示问答
+        function showModal(id) { document.getElementById(id).classList.add('show'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
         function showQuiz() {
             const quiz = QUIZZES[Math.floor(Math.random() * QUIZZES.length)];
             document.getElementById('quizQuestion').textContent = quiz.question;
             const optionsDiv = document.getElementById('quizOptions');
             optionsDiv.innerHTML = '';
-            
             quiz.options.forEach((opt, idx) => {
                 const btn = document.createElement('button');
                 btn.className = 'quiz-option';
                 btn.textContent = opt;
                 btn.onclick = () => {
-                    if (idx === quiz.answer) {
-                        state.stars++;
-                        starCountEl.textContent = state.stars;
-                        alert('答对了！获得 ⭐ 智慧星星！');
-                    } else {
-                        alert('再想想哦！正确答案是：' + quiz.options[quiz.answer]);
-                    }
-                    document.getElementById('quizModal').classList.add('hidden');
+                    if (idx === quiz.answer) { state.stars++; alert('答对了！获得 ⭐ 智慧星星！'); }
+                    else { alert('再想想哦！'); }
+                    closeModal('quizModal');
+                    updateUI();
                 };
                 optionsDiv.appendChild(btn);
             });
-            
-            document.getElementById('quizModal').classList.remove('hidden');
+            showModal('quizModal');
         }
 
-        // 关卡完成
         function levelComplete() {
             state.gameRunning = false;
             state.stars++;
-            starCountEl.textContent = state.stars;
-            document.getElementById('levelCompleteModal').classList.remove('hidden');
-            setTimeout(showQuiz, 500);
+            updateUI();
+            showModal('levelCompleteModal');
         }
 
-        // 下一关
         function nextLevel() {
             state.currentLevel++;
-            levelBadgeEl.textContent = '🌍 第 ' + state.currentLevel + ' 关';
-            document.getElementById('levelCompleteModal').classList.add('hidden');
             state.naughtiesTarget = 10 + state.currentLevel * 5;
             state.naughtiesDefeated = 0;
+            closeModal('levelCompleteModal');
             resetGame();
             startGame();
+            updateUI();
         }
 
-        // 关闭弹窗
-        function closeModal(id) {
-            document.getElementById(id).classList.add('hidden');
-        }
-
-        // 游戏结束
         function gameOver() {
             state.gameRunning = false;
-            setTimeout(() => {
-                alert('哎呀！小淘气们打扰了树屋的宁静 😢\n\n别灰心，再试一次吧！\n种植更多植物来守护花园 💪');
-                resetGame();
-            }, 100);
+            setTimeout(() => { alert('游戏结束！再试一次吧！'); resetGame(); }, 100);
         }
 
-        // 更新植物
-        function updatePlants() {
+        function startGameFromCover() {
+            document.getElementById('coverScreen').classList.add('hidden');
+            setTimeout(startGame, 500);
+        }
+
+        function gameLoop() {
+            if (!state.gameRunning) return;
+            state.frameCount++;
+            
+            drawBackground();
+            drawGrid();
+            drawTreehouse();
+            
+            if (state.frameCount % Math.max(200, CONFIG.NAUGHTY_SPAWN_INTERVAL - state.currentLevel * 30) === 0) spawnNaughty();
+            if (state.frameCount % CONFIG.SUN_SPAWN_INTERVAL === 0) spawnSun();
+            
+            // 更新植物
             gameObjects.plants.forEach(plant => {
-                // 太阳花产阳光
-                if (plant.type.sunProduction && state.frameCount % 500 === 0) {
-                    state.sun += plant.type.sunProduction;
-                    sunCountEl.textContent = state.sun;
-                }
-                
-                // 豌豆射手攻击
+                if (plant.type.sunProduction && state.frameCount % 500 === 0) { state.sun += plant.type.sunProduction; updateUI(); }
                 if (plant.type.damage && state.frameCount % plant.type.attackInterval === 0) {
-                    const hasNaughty = gameObjects.naughties.some(n => 
-                        n.row === plant.row && n.x > CONFIG.OFFSET_X + plant.col * CONFIG.CELL_SIZE
-                    );
-                    if (hasNaughty) {
-                        gameObjects.projectiles.push({
-                            x: CONFIG.OFFSET_X + plant.col * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE,
-                            y: CONFIG.OFFSET_Y + plant.row * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2,
-                            row: plant.row,
-                            damage: plant.type.damage
-                        });
-                    }
+                    const hasNaughty = gameObjects.naughties.some(n => n.row === plant.row && n.x > CONFIG.OFFSET_X + plant.col * CONFIG.CELL_SIZE);
+                    if (hasNaughty) gameObjects.projectiles.push({ x: CONFIG.OFFSET_X + plant.col * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE, y: CONFIG.OFFSET_Y + plant.row * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2, row: plant.row, damage: plant.type.damage });
                 }
-                
                 drawPlant(plant);
             });
-        }
-
-        // 更新小淘气
-        function updateNaughties() {
+            
+            // 更新小淘气
             gameObjects.naughties = gameObjects.naughties.filter(naughty => {
-                // 移动
-                if (!naughty.isEating) {
-                    naughty.x -= naughty.currentSpeed;
-                }
-                
-                // 检查是否碰到植物
+                if (!naughty.isEating) naughty.x -= naughty.currentSpeed;
                 const col = Math.floor((naughty.x - CONFIG.OFFSET_X) / CONFIG.CELL_SIZE);
                 const plant = gameObjects.plants.find(p => p.row === naughty.row && p.col === col);
-                
                 if (plant && naughty.x < CONFIG.OFFSET_X + plant.col * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE - 10) {
-                    if (!naughty.isEating) {
-                        naughty.isEating = true;
-                        naughty.currentSpeed = 0;
-                    }
-                    
-                    // 攻击植物
+                    if (!naughty.isEating) { naughty.isEating = true; naughty.currentSpeed = 0; }
                     if (state.frameCount % 60 === 0) {
                         plant.hp -= 5;
-                        if (plant.hp <= 0) {
-                            // 植物死亡，移除
-                            gameObjects.plants = gameObjects.plants.filter(p => p !== plant);
-                            // 恢复移动
-                            naughty.isEating = false;
-                            naughty.currentSpeed = naughty.originalSpeed;
-                        }
+                        if (plant.hp <= 0) { gameObjects.plants = gameObjects.plants.filter(p => p !== plant); naughty.isEating = false; naughty.currentSpeed = naughty.originalSpeed; }
                     }
                 }
-                
-                // 检查是否到达树屋
-                if (naughty.x < CONFIG.OFFSET_X - 20) {
-                    state.treehouseHealth--;
-                    if (state.treehouseHealth <= 0) {
-                        gameOver();
-                    }
-                    return false;
-                }
-                
+                if (naughty.x < CONFIG.OFFSET_X - 20) { state.treehouseHealth--; if (state.treehouseHealth <= 0) gameOver(); return false; }
                 drawNaughty(naughty);
                 return naughty.hp > 0;
             });
-        }
-
-        // 更新豌豆
-        function updateProjectiles() {
+            
+            // 更新豌豆
             gameObjects.projectiles = gameObjects.projectiles.filter(proj => {
                 proj.x += 5;
-                
-                const hit = gameObjects.naughties.find(n => 
-                    n.row === proj.row && Math.abs(n.x - proj.x) < 25
-                );
-                
+                const hit = gameObjects.naughties.find(n => n.row === proj.row && Math.abs(n.x - proj.x) < 25);
                 if (hit) {
                     hit.hp -= proj.damage;
                     if (hit.hp <= 0) {
                         gameObjects.naughties = gameObjects.naughties.filter(n => n !== hit);
                         state.naughtiesDefeated++;
-                        if (state.naughtiesDefeated >= state.naughtiesTarget) {
-                            levelComplete();
-                        }
+                        updateUI();
+                        if (state.naughtiesDefeated >= state.naughtiesTarget) levelComplete();
                     }
                     return false;
                 }
-                
                 drawProjectile(proj);
                 return proj.x < canvas.width;
             });
-        }
-
-        // 更新阳光
-        function updateSunDrops() {
+            
+            // 更新阳光
             gameObjects.sunDrops = gameObjects.sunDrops.filter(sunDrop => {
-                if (sunDrop.y < sunDrop.targetY) {
-                    sunDrop.y += 2;
-                }
+                if (sunDrop.y < sunDrop.targetY) sunDrop.y += 2;
                 drawSunDrop(sunDrop);
                 return true;
             });
-        }
-
-        // 游戏主循环
-        function gameLoop() {
-            if (!state.gameRunning) return;
-            
-            state.frameCount++;
-            
-            // 绘制背景
-            drawBackground();
-            drawGrid();
-            drawTreehouse();
-            
-            // 生成小淘气
-            const spawnInterval = Math.max(200, CONFIG.NAUGHTY_SPAWN_INTERVAL - state.currentLevel * 30);
-            if (state.frameCount % spawnInterval === 0) {
-                spawnNaughty();
-            }
-            
-            // 生成阳光
-            if (state.frameCount % CONFIG.SUN_SPAWN_INTERVAL === 0) {
-                spawnSun();
-            }
-            
-            // 更新游戏对象
-            updatePlants();
-            updateNaughties();
-            updateProjectiles();
-            updateSunDrops();
             
             requestAnimationFrame(gameLoop);
         }
 
-        // 开始游戏
         function startGame() {
             if (state.gameRunning) return;
             state.gameRunning = true;
             gameLoop();
         }
 
-        // 重置游戏
         function resetGame() {
             state.gameRunning = false;
             gameObjects.plants = [];
             gameObjects.naughties = [];
             gameObjects.projectiles = [];
             gameObjects.sunDrops = [];
-            gameObjects.effects = [];
-            gameObjects.rescueCars = [];
             state.sun = CONFIG.INITIAL_SUN;
             state.treehouseHealth = CONFIG.INITIAL_HEALTH;
             state.frameCount = 0;
             state.naughtiesDefeated = 0;
-            sunCountEl.textContent = state.sun;
-            
+            updateUI();
             drawBackground();
             drawGrid();
             drawTreehouse();
         }
 
-        // 鼠标点击事件
         canvas.addEventListener('click', (e) => {
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
-            
             collectSun(x, y);
-            
-            if (x >= CONFIG.OFFSET_X && x < CONFIG.OFFSET_X + CONFIG.COLS * CONFIG.CELL_SIZE &&
-                y >= CONFIG.OFFSET_Y && y < CONFIG.OFFSET_Y + CONFIG.ROWS * CONFIG.CELL_SIZE) {
+            if (x >= CONFIG.OFFSET_X && x < CONFIG.OFFSET_X + CONFIG.COLS * CONFIG.CELL_SIZE && y >= CONFIG.OFFSET_Y && y < CONFIG.OFFSET_Y + CONFIG.ROWS * CONFIG.CELL_SIZE) {
                 const col = Math.floor((x - CONFIG.OFFSET_X) / CONFIG.CELL_SIZE);
                 const row = Math.floor((y - CONFIG.OFFSET_Y) / CONFIG.CELL_SIZE);
                 plantAt(row, col);
@@ -657,6 +860,7 @@
         });
 
         // 初始化
+        updateUI();
         resetGame();
     </script>
 </body>
