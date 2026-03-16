@@ -456,21 +456,45 @@
     
     <!-- 植物选择 -->
     <div class="plant-selector">
+        <!-- 经济类 -->
         <div class="plant-card" data-plant="sunflower" onclick="selectPlant('sunflower')">
             <span class="plant-emoji">🌻</span>
             <div class="plant-name">太阳花</div>
             <div class="plant-cost">☀️ 50</div>
         </div>
-        <div class="plant-card" data-plant="peashooter" onclick="selectPlant('peashooter')">
-            <span class="plant-emoji">🫛</span>
-            <div class="plant-name">豌豆苗苗</div>
+        <div class="plant-card" data-plant="sunflower2" onclick="selectPlant('sunflower2')">
+            <span class="plant-emoji">🌻✨</span>
+            <div class="plant-name">双朵太阳花</div>
             <div class="plant-cost">☀️ 100</div>
         </div>
+        <!-- 防御类 -->
         <div class="plant-card" data-plant="wallnut" onclick="selectPlant('wallnut')">
             <span class="plant-emoji">🥜</span>
             <div class="plant-name">坚果墩墩</div>
             <div class="plant-cost">☀️ 50</div>
         </div>
+        <div class="plant-card" data-plant="potato" onclick="selectPlant('potato')">
+            <span class="plant-emoji">🥔</span>
+            <div class="plant-name">土豆地雷</div>
+            <div class="plant-cost">☀️ 25</div>
+        </div>
+        <!-- 攻击类 -->
+        <div class="plant-card" data-plant="peashooter" onclick="selectPlant('peashooter')">
+            <span class="plant-emoji">🫛</span>
+            <div class="plant-name">豌豆苗苗</div>
+            <div class="plant-cost">☀️ 100</div>
+        </div>
+        <div class="plant-card" data-plant="rainbowPea" onclick="selectPlant('rainbowPea')">
+            <span class="plant-emoji">🌈</span>
+            <div class="plant-name">彩虹豌豆</div>
+            <div class="plant-cost">☀️ 175</div>
+        </div>
+        <div class="plant-card" data-plant="iceShooter" onclick="selectPlant('iceShooter')">
+            <span class="plant-emoji">❄️</span>
+            <div class="plant-name">寒冰射手</div>
+            <div class="plant-cost">☀️ 175</div>
+        </div>
+        <!-- 爆炸类 -->
         <div class="plant-card" data-plant="cherry" onclick="selectPlant('cherry')">
             <span class="plant-emoji">🍒</span>
             <div class="plant-name">樱桃闹闹</div>
@@ -534,10 +558,16 @@
         const ctx = canvas.getContext('2d');
 
         const PLANTS = {
-            sunflower: { cost: 50, emoji: '🌻', hp: 100, color: '#FFD93D', sunProduction: 25 },
-            peashooter: { cost: 100, emoji: '🫛', hp: 100, color: '#4ECDC4', damage: 20, attackInterval: 100 },
-            wallnut: { cost: 50, emoji: '🥜', hp: 300, color: '#8D6E63' },
-            cherry: { cost: 150, emoji: '🍒', hp: 50, color: '#FF6B6B', explodeDamage: 200, explodeRadius: 150 }
+            // 基础植物
+            sunflower: { cost: 50, emoji: '🌻', hp: 100, color: '#FFD93D', sunProduction: 25, description: '产生阳光' },
+            peashooter: { cost: 100, emoji: '🫛', hp: 100, color: '#4ECDC4', damage: 20, attackInterval: 100, description: '发射豌豆' },
+            wallnut: { cost: 50, emoji: '🥜', hp: 300, color: '#8D6E63', description: '高血量防御' },
+            cherry: { cost: 150, emoji: '🍒', hp: 50, color: '#FF6B6B', explodeDamage: 200, explodeRadius: 150, description: '爆炸攻击' },
+            // 新增植物
+            potato: { cost: 25, emoji: '🥔', hp: 50, color: '#D7CCC8', explodeDamage: 300, explodeRadius: 100, isMine: true, description: '土豆地雷' },
+            sunflower2: { cost: 100, emoji: '🌻🌻', hp: 100, color: '#FFD93D', sunProduction: 50, description: '双朵太阳花' },
+            rainbowPea: { cost: 175, emoji: '🌈', hp: 100, color: '#9C27B0', damage: 40, attackInterval: 80, isRainbow: true, description: '彩虹豌豆' },
+            iceShooter: { cost: 175, emoji: '❄️', hp: 100, color: '#03A9F4', damage: 15, attackInterval: 100, isIce: true, slowDuration: 180, description: '寒冰射手' }
         };
 
         const NAUGHTY_TYPES = [
@@ -772,37 +802,104 @@
             
             // 更新植物
             gameObjects.plants.forEach(plant => {
-                if (plant.type.sunProduction && state.frameCount % 500 === 0) { state.sun += plant.type.sunProduction; updateUI(); }
+                // 太阳花产阳光
+                if (plant.type.sunProduction && state.frameCount % 500 === 0) {
+                    state.sun += plant.type.sunProduction;
+                    updateUI();
+                }
+                
+                // 攻击型植物射击
                 if (plant.type.damage && state.frameCount % plant.type.attackInterval === 0) {
                     const hasNaughty = gameObjects.naughties.some(n => n.row === plant.row && n.x > CONFIG.OFFSET_X + plant.col * CONFIG.CELL_SIZE);
-                    if (hasNaughty) gameObjects.projectiles.push({ x: CONFIG.OFFSET_X + plant.col * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE, y: CONFIG.OFFSET_Y + plant.row * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2, row: plant.row, damage: plant.type.damage });
+                    if (hasNaughty) {
+                        gameObjects.projectiles.push({
+                            x: CONFIG.OFFSET_X + plant.col * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE,
+                            y: CONFIG.OFFSET_Y + plant.row * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2,
+                            row: plant.row,
+                            damage: plant.type.damage,
+                            isRainbow: plant.type.isRainbow,
+                            isIce: plant.type.isIce,
+                            slowDuration: plant.type.slowDuration
+                        });
+                    }
                 }
+                
+                // 土豆地雷：当小淘气踩上时爆炸
+                if (plant.type.isMine) {
+                    const naughtyOnMine = gameObjects.naughties.find(n => {
+                        const col = Math.floor((n.x - CONFIG.OFFSET_X) / CONFIG.CELL_SIZE);
+                        return n.row === plant.row && col === plant.col && n.x < CONFIG.OFFSET_X + plant.col * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE;
+                    });
+                    if (naughtyOnMine) {
+                        // 爆炸伤害
+                        gameObjects.naughties.forEach(n => {
+                            const dx = n.x - (CONFIG.OFFSET_X + plant.col * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2);
+                            const dy = (CONFIG.OFFSET_Y + n.row * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2) - (CONFIG.OFFSET_Y + plant.row * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2);
+                            if (Math.sqrt(dx * dx + dy * dy) < plant.type.explodeRadius) {
+                                n.hp -= plant.type.explodeDamage;
+                            }
+                        });
+                        // 移除地雷
+                        plant.hp = 0;
+                    }
+                }
+                
                 drawPlant(plant);
             });
             
+            // 移除死亡的植物
+            gameObjects.plants = gameObjects.plants.filter(plant => plant.hp > 0);
+            
             // 更新小淘气
             gameObjects.naughties = gameObjects.naughties.filter(naughty => {
+                // 处理减速效果
+                if (naughty.slowTimer && naughty.slowTimer > 0) {
+                    naughty.slowTimer--;
+                    if (naughty.slowTimer <= 0) {
+                        naughty.currentSpeed = naughty.originalSpeed;
+                    }
+                }
+                
                 if (!naughty.isEating) naughty.x -= naughty.currentSpeed;
+                
                 const col = Math.floor((naughty.x - CONFIG.OFFSET_X) / CONFIG.CELL_SIZE);
-                const plant = gameObjects.plants.find(p => p.row === naughty.row && p.col === col);
+                const plant = gameObjects.plants.find(p => p.row === naughty.row && p.col === col && p.hp > 0);
+                
                 if (plant && naughty.x < CONFIG.OFFSET_X + plant.col * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE - 10) {
                     if (!naughty.isEating) { naughty.isEating = true; naughty.currentSpeed = 0; }
                     if (state.frameCount % 60 === 0) {
                         plant.hp -= 5;
-                        if (plant.hp <= 0) { gameObjects.plants = gameObjects.plants.filter(p => p !== plant); naughty.isEating = false; naughty.currentSpeed = naughty.originalSpeed; }
+                        if (plant.hp <= 0) {
+                            gameObjects.plants = gameObjects.plants.filter(p => p !== plant);
+                            naughty.isEating = false;
+                            naughty.currentSpeed = naughty.slowTimer > 0 ? naughty.originalSpeed * 0.5 : naughty.originalSpeed;
+                        }
                     }
                 }
-                if (naughty.x < CONFIG.OFFSET_X - 20) { state.treehouseHealth--; if (state.treehouseHealth <= 0) gameOver(); return false; }
+                
+                if (naughty.x < CONFIG.OFFSET_X - 20) {
+                    state.treehouseHealth--;
+                    if (state.treehouseHealth <= 0) gameOver();
+                    return false;
+                }
+                
                 drawNaughty(naughty);
                 return naughty.hp > 0;
             });
             
-            // 更新豌豆
+            // 更新豌豆（包括彩虹豌豆和寒冰豌豆）
             gameObjects.projectiles = gameObjects.projectiles.filter(proj => {
                 proj.x += 5;
                 const hit = gameObjects.naughties.find(n => n.row === proj.row && Math.abs(n.x - proj.x) < 25);
                 if (hit) {
                     hit.hp -= proj.damage;
+                    
+                    // 寒冰效果：减速
+                    if (proj.isIce) {
+                        hit.slowTimer = proj.slowDuration;
+                        hit.currentSpeed = hit.originalSpeed * 0.5;
+                    }
+                    
                     if (hit.hp <= 0) {
                         gameObjects.naughties = gameObjects.naughties.filter(n => n !== hit);
                         state.naughtiesDefeated++;
