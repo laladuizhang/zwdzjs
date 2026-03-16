@@ -541,7 +541,7 @@
         // 游戏配置
         const CONFIG = {
             ROWS: 5, COLS: 6, CELL_SIZE: 80, OFFSET_X: 100, OFFSET_Y: 70,
-            INITIAL_SUN: 150, INITIAL_HEALTH: 3,
+            INITIAL_SUN: 500, INITIAL_HEALTH: 3,
             NAUGHTY_SPAWN_INTERVAL: 400, SUN_SPAWN_INTERVAL: 600, RESCUE_COOLDOWN: 30000
         };
 
@@ -562,7 +562,7 @@
             sunflower: { cost: 50, emoji: '🌻', hp: 100, color: '#FFD93D', sunProduction: 25, description: '产生阳光' },
             peashooter: { cost: 100, emoji: '🫛', hp: 100, color: '#4ECDC4', damage: 20, attackInterval: 100, description: '发射豌豆' },
             wallnut: { cost: 50, emoji: '🥜', hp: 300, color: '#8D6E63', description: '高血量防御' },
-            cherry: { cost: 150, emoji: '🍒', hp: 50, color: '#FF6B6B', explodeDamage: 200, explodeRadius: 150, description: '爆炸攻击' },
+            cherry: { cost: 150, emoji: '🍒', hp: 50, color: '#FF6B6B', explodeDamage: 200, explodeRadius: 150, autoExplode: true, explodeDelay: 180, description: '3秒后自动爆炸' },
             // 新增植物
             potato: { cost: 25, emoji: '🥔', hp: 50, color: '#D7CCC8', explodeDamage: 300, explodeRadius: 100, isMine: true, description: '土豆地雷' },
             sunflower2: { cost: 100, emoji: '🌻🌻', hp: 100, color: '#FFD93D', sunProduction: 50, description: '双朵太阳花' },
@@ -840,6 +840,30 @@
                             }
                         });
                         // 移除地雷
+                        plant.hp = 0;
+                    }
+                }
+                
+                // 樱桃闹闹：种植后3秒自动爆炸
+                if (plant.type.autoExplode) {
+                    if (!plant.plantTime) plant.plantTime = state.frameCount;
+                    // 显示倒计时
+                    const elapsed = state.frameCount - plant.plantTime;
+                    const remaining = Math.ceil((plant.type.explodeDelay - elapsed) / 60);
+                    if (remaining > 0 && state.frameCount % 60 === 0) {
+                        // 可以在这里添加倒计时显示
+                    }
+                    // 时间到，爆炸
+                    if (elapsed >= plant.type.explodeDelay) {
+                        // 爆炸伤害
+                        gameObjects.naughties.forEach(n => {
+                            const dx = n.x - (CONFIG.OFFSET_X + plant.col * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2);
+                            const dy = (CONFIG.OFFSET_Y + n.row * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2) - (CONFIG.OFFSET_Y + plant.row * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2);
+                            if (Math.sqrt(dx * dx + dy * dy) < plant.type.explodeRadius) {
+                                n.hp -= plant.type.explodeDamage;
+                            }
+                        });
+                        // 移除樱桃
                         plant.hp = 0;
                     }
                 }
