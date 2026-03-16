@@ -790,10 +790,44 @@
             if (!state.rescueAvailable || !state.gameRunning) return;
             state.rescueAvailable = false;
             document.getElementById('rescueBtn').disabled = true;
+            document.getElementById('rescueBtn').textContent = '🚗 救援中...';
+            
+            // 每一路生成一个婴儿车，持续5秒
+            const rescueDuration = 5000; // 5秒
+            const startTime = Date.now();
+            
+            // 立即生成第一波婴儿车
             for (let row = 0; row < CONFIG.ROWS; row++) {
-                gameObjects.rescueCars.push({ x: CONFIG.OFFSET_X - 50, row, speed: 8 });
+                gameObjects.rescueCars.push({ 
+                    x: CONFIG.OFFSET_X - 50, 
+                    row, 
+                    speed: 8,
+                    startTime: startTime
+                });
             }
-            setTimeout(() => { state.rescueAvailable = true; document.getElementById('rescueBtn').disabled = false; }, CONFIG.RESCUE_COOLDOWN);
+            
+            // 5秒内持续生成婴儿车
+            const spawnInterval = setInterval(() => {
+                if (Date.now() - startTime >= rescueDuration || !state.gameRunning) {
+                    clearInterval(spawnInterval);
+                    return;
+                }
+                for (let row = 0; row < CONFIG.ROWS; row++) {
+                    gameObjects.rescueCars.push({ 
+                        x: CONFIG.OFFSET_X - 50, 
+                        row, 
+                        speed: 8,
+                        startTime: Date.now()
+                    });
+                }
+            }, 800); // 每0.8秒生成一波
+            
+            // 1分钟后恢复
+            setTimeout(() => { 
+                state.rescueAvailable = true; 
+                document.getElementById('rescueBtn').disabled = false;
+                document.getElementById('rescueBtn').textContent = '🚗 婴儿车救援';
+            }, 60000); // 1分钟冷却
         }
 
         function selectPlant(type) {
@@ -1044,6 +1078,49 @@
                 if (sunDrop.y < sunDrop.targetY) sunDrop.y += 2;
                 drawSunDrop(sunDrop);
                 return true;
+            });
+            
+            // 更新婴儿车救援
+            gameObjects.rescueCars = gameObjects.rescueCars.filter(car => {
+                car.x += car.speed;
+                
+                // 绘制婴儿车
+                const y = CONFIG.OFFSET_Y + car.row * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
+                
+                // 车身
+                ctx.fillStyle = '#E91E63';
+                ctx.fillRect(car.x - 30, y - 20, 60, 40);
+                
+                // 车窗
+                ctx.fillStyle = '#F8BBD9';
+                ctx.fillRect(car.x - 20, y - 15, 40, 25);
+                
+                // 轮子
+                ctx.fillStyle = '#333';
+                ctx.beginPath();
+                ctx.arc(car.x - 20, y + 20, 10, 0, Math.PI * 2);
+                ctx.arc(car.x + 20, y + 20, 10, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 婴儿图标
+                ctx.font = '20px Arial';
+                ctx.fillText('🍼', car.x - 10, y - 25);
+                
+                // 检测碰撞 - 拖走小淘气
+                gameObjects.naughties = gameObjects.naughties.filter(n => {
+                    if (n.row === car.row && Math.abs(n.x - car.x) < 40) {
+                        // 被婴儿车拖走
+                        return false;
+                    }
+                    return true;
+                });
+                
+                // 5秒后移除婴儿车
+                if (Date.now() - car.startTime > 5000) {
+                    return false;
+                }
+                
+                return car.x < canvas.width + 100;
             });
             
             requestAnimationFrame(gameLoop);
