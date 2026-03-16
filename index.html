@@ -541,7 +541,7 @@
         // 游戏配置
         const CONFIG = {
             ROWS: 5, COLS: 6, CELL_SIZE: 80, OFFSET_X: 100, OFFSET_Y: 70,
-            INITIAL_SUN: 500, INITIAL_HEALTH: 3,
+            INITIAL_SUN: 500, INITIAL_HEALTH: 3, MAX_LEVELS: 10,
             NAUGHTY_SPAWN_INTERVAL: 400, SUN_SPAWN_INTERVAL: 600, RESCUE_COOLDOWN: 30000
         };
 
@@ -549,7 +549,8 @@
         const state = {
             sun: CONFIG.INITIAL_SUN, stars: 0, selectedPlant: null, gameRunning: false,
             treehouseHealth: CONFIG.INITIAL_HEALTH, frameCount: 0, currentLevel: 1,
-            naughtiesDefeated: 0, naughtiesTarget: 10, rescueAvailable: true
+            naughtiesDefeated: 0, naughtiesTarget: 10, rescueAvailable: true,
+            firstRoundNoDamage: true // 第一轮不消耗生命
         };
 
         const gameObjects = { plants: [], naughties: [], projectiles: [], sunDrops: [], effects: [], rescueCars: [] };
@@ -664,17 +665,97 @@
         }
 
         function drawNaughty(naughty) {
-            const x = naughty.x, y = CONFIG.OFFSET_Y + naughty.row * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
+            const x = naughty.x;
+            const y = CONFIG.OFFSET_Y + naughty.row * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
+            const bounce = Math.sin(state.frameCount * 0.1) * 3; // 弹跳动画
+            
+            // 阴影
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx.beginPath();
+            ctx.ellipse(x, y + 45, 20, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 身体（圆滚滚更可爱）
             ctx.fillStyle = naughty.data.color;
             ctx.beginPath();
-            ctx.ellipse(x, y + 10, 25, 35, 0, 0, Math.PI * 2);
+            ctx.ellipse(x, y + 10 + bounce, 28, 32, 0, 0, Math.PI * 2);
             ctx.fill();
+            
+            // 身体高光
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            ctx.beginPath();
+            ctx.ellipse(x - 10, y + 5 + bounce, 15, 20, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 头
             ctx.fillStyle = '#FFCCBC';
             ctx.beginPath();
-            ctx.arc(x, y - 20, 22, 0, Math.PI * 2);
+            ctx.arc(x, y - 18 + bounce, 24, 0, Math.PI * 2);
             ctx.fill();
-            ctx.font = '30px Arial';
-            ctx.fillText(naughty.data.emoji, x - 15, y - 35);
+            
+            // 腮红
+            ctx.fillStyle = 'rgba(255,150,150,0.5)';
+            ctx.beginPath();
+            ctx.arc(x - 12, y - 12 + bounce, 5, 0, Math.PI * 2);
+            ctx.arc(x + 12, y - 12 + bounce, 5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 眼睛（眨眼动画）
+            if (Math.floor(state.frameCount / 60) % 3 !== 0) {
+                ctx.fillStyle = '#333';
+                ctx.beginPath();
+                ctx.arc(x - 7, y - 22 + bounce, 4, 0, Math.PI * 2);
+                ctx.arc(x + 7, y - 22 + bounce, 4, 0, Math.PI * 2);
+                ctx.fill();
+                // 眼睛高光
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(x - 8, y - 24 + bounce, 2, 0, Math.PI * 2);
+                ctx.arc(x + 6, y - 24 + bounce, 2, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                // 眨眼
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x - 11, y - 22 + bounce);
+                ctx.lineTo(x - 3, y - 22 + bounce);
+                ctx.moveTo(x + 3, y - 22 + bounce);
+                ctx.lineTo(x + 11, y - 22 + bounce);
+                ctx.stroke();
+            }
+            
+            // 嘴巴（委屈的可爱表情）
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(x, y - 12 + bounce, 6, 0.5, Math.PI - 0.5);
+            ctx.stroke();
+            
+            // 小表情图标
+            ctx.font = '24px Arial';
+            ctx.fillText(naughty.data.emoji, x - 12, y - 38 + bounce);
+            
+            // 血条背景
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(x - 25, y - 55 + bounce, 50, 6);
+            
+            // 血条
+            const hpPercent = naughty.hp / naughty.data.hp;
+            const barGradient = ctx.createLinearGradient(x - 25, 0, x + 25, 0);
+            barGradient.addColorStop(0, '#FF6B6B');
+            barGradient.addColorStop(1, '#4CAF50');
+            ctx.fillStyle = barGradient;
+            ctx.fillRect(x - 25, y - 55 + bounce, 50 * hpPercent, 6);
+            
+            // 减速效果（蓝色光环）
+            if (naughty.slowTimer > 0) {
+                ctx.strokeStyle = 'rgba(3,169,244,0.6)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(x, y + 10 + bounce, 35, 0, Math.PI * 2);
+                ctx.stroke();
+            }
         }
 
         function drawProjectile(proj) {
@@ -766,6 +847,19 @@
             state.gameRunning = false;
             state.stars++;
             updateUI();
+            
+            // 检查是否通关所有关卡
+            if (state.currentLevel >= CONFIG.MAX_LEVELS) {
+                setTimeout(() => {
+                    alert('🎉🎉🎉 恭喜你通关了全部10轮！\n\n你是真正的阳光花园守护者！\n\n总智慧星星：⭐ ' + state.stars);
+                    resetGame();
+                    state.currentLevel = 1;
+                    state.stars = 0;
+                    updateUI();
+                }, 500);
+                return;
+            }
+            
             showModal('levelCompleteModal');
         }
 
@@ -902,8 +996,17 @@
                 }
                 
                 if (naughty.x < CONFIG.OFFSET_X - 20) {
-                    state.treehouseHealth--;
-                    if (state.treehouseHealth <= 0) gameOver();
+                    // 第一轮不消耗生命
+                    if (state.currentLevel === 1 && state.firstRoundNoDamage) {
+                        // 显示提示
+                        if (!state.shownFirstRoundMsg) {
+                            state.shownFirstRoundMsg = true;
+                            setTimeout(() => alert('🎉 第一轮是练习关，树屋不会受到伤害！'), 100);
+                        }
+                    } else {
+                        state.treehouseHealth--;
+                        if (state.treehouseHealth <= 0) gameOver();
+                    }
                     return false;
                 }
                 
